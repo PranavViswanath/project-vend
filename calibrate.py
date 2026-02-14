@@ -10,7 +10,12 @@ import xarm
 
 arm = xarm.Controller('USB')
 print("=== Position Calibration ===")
-print("Physically move the arm to each position, then press Enter\n")
+print("Physically move the arm to each position, then press Enter")
+print("Servos will go limp so you can move the arm by hand.\n")
+
+# Turn off all servo motors so arm can be freely moved
+for i in range(1, 7):
+    arm.servoOff(i)
 
 positions = {}
 instructions = {
@@ -29,6 +34,10 @@ for name, instruction in instructions.items():
     pose = [arm.getPosition(i) for i in range(1, 7)]
     positions[name] = pose
     print(f"  Recorded: {pose}")
+
+    # Re-disable servos for next position
+    for i in range(1, 7):
+        arm.servoOff(i)
 
 print("\n" + "=" * 60)
 print("Copy these into positions.py:")
