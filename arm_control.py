@@ -46,7 +46,7 @@ def sort_to_bin(category: str):
     """Pick item from PICKUP zone and place in the appropriate bin.
     
     Args:
-        category: one of 'nonperishable', 'snack', 'protein'
+        category: one of 'fruit', 'snack', 'drink'
     """
     if category not in CATEGORY_MAP:
         raise ValueError(f"Unknown category: {category}. Use one of {list(CATEGORY_MAP.keys())}")

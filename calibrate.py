@@ -21,9 +21,9 @@ positions = {}
 instructions = {
     "HOME": "Safe resting position (arm up, out of the way)",
     "PICKUP": "Gripper over donation zone (where people place items)",
-    "BIN_NONPERISHABLE": "Gripper over canned goods / boxed items bin",
-    "BIN_SNACKS": "Gripper over chips / granola bars / candy bin",
-    "BIN_PROTEIN": "Gripper over protein bars / peanut butter bin",
+    "BIN_FRUIT": "Gripper over fruit bin (apples, bananas, oranges)",
+    "BIN_SNACK": "Gripper over snack bin (chips, granola bars, candy)",
+    "BIN_DRINK": "Gripper over drink bin (water bottles, juice, soda)",
 }
 
 for name, instruction in instructions.items():

@@ -11,13 +11,13 @@ HOME = [500, 500, 500, 500, 500, 500]
 PICKUP = [500, 500, 500, 500, 500, 500]
 
 # Bin positions
-BIN_NONPERISHABLE = [500, 500, 500, 500, 500, 500]  # Cans, boxes, pasta
-BIN_SNACKS = [500, 500, 500, 500, 500, 500]         # Chips, granola bars, candy
-BIN_PROTEIN = [500, 500, 500, 500, 500, 500]         # Protein bars, peanut butter
+BIN_FRUIT = [500, 500, 500, 500, 500, 500]   # Apples, bananas, oranges
+BIN_SNACK = [500, 500, 500, 500, 500, 500]   # Chips, granola bars, candy
+BIN_DRINK = [500, 500, 500, 500, 500, 500]   # Water bottles, juice, soda
 
 # Map vision categories to bin positions
 CATEGORY_MAP = {
-    "nonperishable": BIN_NONPERISHABLE,
-    "snack": BIN_SNACKS,
-    "protein": BIN_PROTEIN,
+    "fruit": BIN_FRUIT,
+    "snack": BIN_SNACK,
+    "drink": BIN_DRINK,
 }
