@@ -4,29 +4,91 @@ Autonomous food bank for TreeHacks 2026. xArm 1S sorts donated food, Claude agen
 
 ## Hardware
 
-- Hiwonder xArm 1S (USB) → Nvidia Jetson Orin Nano
-- Camera module for vision classification
+- Hiwonder xArm 1S over USB (connected to laptop)
+- Laptop webcam for vision classification
 
-## Setup (Jetson / Linux)
+## Setup (Laptop)
 
-```bash
-# System deps for USB HID
-sudo apt install python3-dev libusb-1.0-0-dev libudev-dev
-
-# udev rule so xArm is accessible without root
-sudo bash -c 'echo "SUBSYSTEM==\"usb\", ATTR{idVendor}==\"0483\", ATTR{idProduct}==\"5750\", MODE=\"0660\", GROUP=\"plugdev\"" > /etc/udev/rules.d/99-xarm.rules'
-sudo udevadm control --reload-rules && sudo udevadm trigger
-
-# Python env
-python3 -m venv venv
-source venv/bin/activate
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 ```
 
-## Test xArm
+Set your API key before running vision features:
 
-```bash
-python3 test_arm.py
+```powershell
+$env:ANTHROPIC_API_KEY="YOUR_API_KEY"
 ```
 
-Should print "Connected!", wiggle servo 2, and return it to its original position.
+## Calibrate Arm Positions
+
+Physically move the arm to each position and record servo values:
+
+```powershell
+python calibrate.py
+```
+
+Copy the output into `positions.py`.
+
+## Run the Full System
+
+### 1. Start the API (terminal 1)
+
+```powershell
+python api.py
+```
+
+Runs on http://localhost:5000
+
+### 2. Open the Dashboard
+
+Open `dashboard.html` in your browser. It will show:
+- Live stats (items, weight, donors)
+- Category breakdown (fruit/snack/drink)
+- Real-time donation feed with Claude's detailed classifications
+
+### 3. Run the Pipeline (terminal 2)
+
+**Test mode (manual capture):**
+```powershell
+python test_pipeline.py
+```
+Press SPACE to capture and classify.
+
+**Auto mode (motion detection):**
+```powershell
+python main.py
+```
+Watches for items placed in front of camera, auto-classifies and sorts.
+
+**Vision-only (no arm):**
+```powershell
+python main.py --no-arm
+```
+
+## Quick Tests
+
+**Test arm:**
+```powershell
+python test_arm.py
+```
+
+**Test camera + vision:**
+```powershell
+python test_vision.py
+```
+
+**Test camera demo:**
+```powershell
+python camera_demo.py --camera 0
+```
+
+## Data
+
+- Donations logged to: `donations.json`
+- Captured images saved to: `images/`
+- API endpoints:
+  - GET `/donations` - all records
+  - GET `/donations/recent?limit=10` - latest N
+  - GET `/stats` - summary stats

@@ -1,7 +1,7 @@
 """Record positions by moving arm by hand.
 
 Usage:
-    python3 calibrate.py
+    python calibrate.py
 
 Physically move the arm to each position, then press Enter to record.
 Copy the output into positions.py.

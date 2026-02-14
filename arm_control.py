@@ -1,6 +1,7 @@
 """Arm control helpers for Project Lend.
 
 Provides:
+- connect(): connect to the xArm over USB
 - move_to_pose(pose): move arm to a calibrated position
 - gripper_open() / gripper_close(): operate the claw
 - sort_to_bin(category): full pick-and-place cycle
@@ -10,26 +11,50 @@ import xarm
 from positions import HOME, PICKUP, CATEGORY_MAP
 
 MOVE_MS = 1500  # movement duration in milliseconds
-GRIPPER_OPEN = 200   # adjust based on your calibration
-GRIPPER_CLOSE = 600  # adjust based on your calibration
+GRIPPER_OPEN = 50    # adjust based on your calibration
+GRIPPER_CLOSE = 700  # adjust based on your calibration
 
-arm = xarm.Controller('USB')
+arm = None
+
+
+def connect():
+    """Connect to xArm over USB. Call once before using any arm functions."""
+    global arm
+    if arm is None:
+        arm = xarm.Controller('USB')
+        print("Connected to xArm!")
+    return arm
+
+
+def _require_arm():
+    if arm is None:
+        raise RuntimeError("Call arm_control.connect() before using the arm.")
 
 
 def move_to_pose(pose: list, duration: int = MOVE_MS):
     """Move all 6 servos to a pose."""
+    _require_arm()
     commands = [[i + 1, pose[i]] for i in range(6)]
+    arm.setPosition(commands, duration, wait=True)
+
+
+def move_body(pose: list, duration: int = MOVE_MS):
+    """Move servos 2-6 only, leaving the gripper (servo 1) unchanged."""
+    _require_arm()
+    commands = [[i + 1, pose[i]] for i in range(1, 6)]
     arm.setPosition(commands, duration, wait=True)
 
 
 def gripper_open():
     """Open the gripper."""
+    _require_arm()
     arm.setPosition(1, GRIPPER_OPEN, MOVE_MS, True)
     _gripper_relief()
 
 
 def gripper_close():
     """Close the gripper (with pressure relief)."""
+    _require_arm()
     arm.setPosition(1, GRIPPER_CLOSE, MOVE_MS, True)
     _gripper_relief()
 
@@ -48,6 +73,7 @@ def sort_to_bin(category: str):
     Args:
         category: one of 'fruit', 'snack', 'drink'
     """
+    _require_arm()
     if category not in CATEGORY_MAP:
         raise ValueError(f"Unknown category: {category}. Use one of {list(CATEGORY_MAP.keys())}")
     
@@ -55,14 +81,14 @@ def sort_to_bin(category: str):
     
     print(f"Sorting item to {category} bin...")
     
-    # 1. Start at home
+    # 1. Start at home with gripper open
     print("  -> HOME")
     move_to_pose(HOME)
     gripper_open()
     
-    # 2. Move to pickup zone
+    # 2. Move to pickup zone (gripper stays open)
     print("  -> PICKUP")
-    move_to_pose(PICKUP)
+    move_body(PICKUP)
     sleep(0.3)
     
     # 3. Grab item
@@ -70,13 +96,13 @@ def sort_to_bin(category: str):
     gripper_close()
     sleep(0.3)
     
-    # 4. Lift slightly (back to home first for safety)
+    # 4. Lift (gripper stays closed)
     print("  -> HOME (lift)")
-    move_to_pose(HOME)
+    move_body(HOME)
     
-    # 5. Move to target bin
+    # 5. Move to target bin (gripper stays closed)
     print(f"  -> BIN ({category})")
-    move_to_pose(bin_pose)
+    move_body(bin_pose)
     sleep(0.3)
     
     # 6. Release item
@@ -93,6 +119,7 @@ def sort_to_bin(category: str):
 
 if __name__ == "__main__":
     # Quick test: cycle through all positions
+    connect()
     print("Testing arm control...")
     
     print("\n1. Moving to HOME")

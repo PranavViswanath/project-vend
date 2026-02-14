@@ -1,4 +1,4 @@
-"""Camera → Claude classification demo.
+"""Laptop webcam → Claude classification demo.
 
 Modes:
 - manual: press SPACE to classify current frame
@@ -12,6 +12,7 @@ Controls:
 Usage:
     python camera_demo.py
     python camera_demo.py --camera 1
+    python camera_demo.py --camera 2
     python camera_demo.py --mode auto --interval 1.5
 """
 import argparse
@@ -28,10 +29,12 @@ COLORS = {
 
 
 def main(camera_index: int = 0, mode: str = "manual", interval: float = 2.0):
-    cap = cv2.VideoCapture(camera_index)
+    cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
+    if not cap.isOpened():
+        cap = cv2.VideoCapture(camera_index)
     if not cap.isOpened():
         print(f"Error: Could not open camera {camera_index}")
-        print("Try: python camera_demo.py --camera 1")
+        print("Try: python camera_demo.py --camera 1 (or --camera 2)")
         return
 
     auto_mode = mode.lower() == "auto"
