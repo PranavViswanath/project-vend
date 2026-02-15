@@ -4,9 +4,10 @@ import json
 import os
 from datetime import datetime, timezone
 
-BASE_DIR = os.path.dirname(__file__)
-PIPELINE_STATE_PATH = os.path.join(BASE_DIR, "pipeline_state.json")
-LATEST_FRAME_PATH = os.path.join(BASE_DIR, "latest_frame.jpg")
+from lend import PROJECT_ROOT
+
+PIPELINE_STATE_PATH = os.path.join(PROJECT_ROOT, "pipeline_state.json")
+LATEST_FRAME_PATH = os.path.join(PROJECT_ROOT, "latest_frame.jpg")
 
 
 def _utc_now_iso() -> str:

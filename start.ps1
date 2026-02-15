@@ -7,7 +7,7 @@ $frontendDir = Join-Path $root "frontend"
 
 # ── 1. Flask API (background window) ────────────────────────
 Write-Host "[*] Starting Flask API..." -ForegroundColor Cyan
-Start-Process -FilePath $venvPython -ArgumentList (Join-Path $root "api.py") `
+Start-Process -FilePath $venvPython -ArgumentList (Join-Path $root "run_api.py") `
     -WorkingDirectory $root -WindowStyle Minimized
 
 # ── 2. Frontend dev server (background window) ──────────────
@@ -25,7 +25,7 @@ Write-Host ""
 
 # ── 3. Pipeline (foreground — needs OpenCV window) ──────────
 Write-Host "[*] Starting pipeline (press 'c' to classify, 'q' to quit)..." -ForegroundColor Cyan
-& $venvPython (Join-Path $root "test_pipeline.py")
+& $venvPython (Join-Path $root "tools\test_pipeline.py")
 
 # ── Cleanup: kill background processes on exit ──────────────
 Write-Host "[*] Shutting down background services..." -ForegroundColor Yellow

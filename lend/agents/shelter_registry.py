@@ -15,7 +15,9 @@ import json
 import os
 from datetime import datetime, timezone
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "..", "shelters.json")
+from lend import PROJECT_ROOT
+
+DB_PATH = os.path.join(PROJECT_ROOT, "shelters.json")
 
 
 def _read_db():

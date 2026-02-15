@@ -6,15 +6,12 @@ Manages the food bank donation system by coordinating:
 - Shelter email outreach (via Fetch.ai uAgent + MCP bridge)
 
 Usage:
-    python -m agents.orchestrator
-    python -m agents.orchestrator --prompt "What shelters need fruit?"
+    python -m lend.agents.orchestrator
+    python -m lend.agents.orchestrator --prompt "What shelters need fruit?"
 """
 
 import asyncio
 import os
-import sys
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from claude_agent_sdk import query, ClaudeAgentOptions, AgentDefinition
 

@@ -6,16 +6,12 @@ and supply/demand matching over the Model Context Protocol.
 
 import json
 import os
-import sys
 import smtplib
 from email.mime.text import MIMEText
 
-# Allow imports from project root (donations module, etc.)
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from mcp.server.fastmcp import FastMCP
-from agents import shelter_registry
-import donations
+from lend.agents import shelter_registry
+from lend.data import donations
 
 mcp = FastMCP("project-lend-bridge")
 

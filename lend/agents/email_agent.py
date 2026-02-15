@@ -23,7 +23,7 @@ from uagents_core.contrib.protocols.chat import (
     chat_protocol_spec,
 )
 
-from agents.shelter_registry import (
+from lend.agents.shelter_registry import (
     get_shelter,
     get_all_shelters,
     get_active_shelters,

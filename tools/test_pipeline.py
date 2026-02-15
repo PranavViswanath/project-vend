@@ -16,13 +16,14 @@ import threading
 import time
 import cv2
 
-from vision import classify_frame_detailed
-import arm_control
-import donations
-from positions import HOME
-from runtime_state import write_pipeline_state, LATEST_FRAME_PATH
+from lend import PROJECT_ROOT
+from lend.vision.classifier import classify_frame_detailed
+from lend.hardware import arm_control
+from lend.data import donations
+from lend.hardware.positions import HOME
+from lend.data.runtime_state import write_pipeline_state, LATEST_FRAME_PATH
 
-IMAGES_DIR = os.path.join(os.path.dirname(__file__), "images")
+IMAGES_DIR = os.path.join(PROJECT_ROOT, "images")
 os.makedirs(IMAGES_DIR, exist_ok=True)
 
 camera_lock = threading.Lock()

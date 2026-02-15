@@ -8,7 +8,7 @@ Provides:
 """
 from time import sleep
 import xarm
-from positions import HOME, PICKUP, CATEGORY_MAP
+from lend.hardware.positions import HOME, PICKUP, CATEGORY_MAP
 
 MOVE_MS = 1500  # movement duration in milliseconds
 GRIPPER_OPEN = 50    # adjust based on your calibration

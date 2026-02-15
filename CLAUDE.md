@@ -17,6 +17,7 @@ The system detects donated items via motion detection, classifies them into cate
 python -m venv venv
 source venv/bin/activate  # or .\venv\Scripts\Activate.ps1 on Windows
 pip install -r requirements.txt
+pip install -e .           # install lend package in editable mode
 ```
 
 Required environment variable:
@@ -34,53 +35,80 @@ export CLAUDE_VISION_MODEL="claude-3-5-haiku-latest"
 ### Hardware Calibration
 Run FIRST when setting up new positions or after hardware changes:
 ```bash
-python calibrate.py
+python tools/calibrate.py
 ```
-Physically move the arm to each position, press Enter to record servo values, then copy output into `positions.py`.
+Physically move the arm to each position, press Enter to record servo values, then copy output into `lend/hardware/positions.py`.
 
 ### Testing Individual Components
 ```bash
 # Detect available cameras
-python detect_cameras.py
+python tools/detect_cameras.py
 
 # Test arm only (no vision)
-python test_arm.py
+python tools/test_arm.py
 
 # Test vision only (requires ANTHROPIC_API_KEY)
-python test_vision.py
+python tools/test_vision.py
 
 # Test camera preview
-python camera_demo.py --camera 0  # or --camera 1 for ArduCam
+python tools/camera_demo.py --camera 0  # or --camera 1 for ArduCam
 ```
 
 ### Running the Full System
 
 **Terminal 1 - Start API server:**
 ```bash
-python api.py                    # runs on http://localhost:5000
-python api.py --port 8080        # custom port
+python run_api.py                    # runs on http://localhost:5000
+python run_api.py --port 8080        # custom port
 ```
 
 **Browser - Open dashboard:**
-Open `dashboard.html` to view live stats, category breakdown, and donation feed.
+Open `static/dashboard.html` to view live stats, category breakdown, and donation feed.
 
 **Terminal 2 - Run pipeline:**
 ```bash
 # Manual test mode (press SPACE to capture)
-python test_pipeline.py --camera 1
+python tools/test_pipeline.py --camera 1
 
 # Auto mode (motion detection)
-python main.py --camera 1
+python run_pipeline.py --camera 1
 
 # Vision-only mode (no arm control)
-python main.py --no-arm
+python run_pipeline.py --no-arm
 ```
 
 Default camera is 1 (ArduCam). Use `--camera 0` for laptop webcam.
 
 ## Architecture
 
-### State Machine (main.py)
+### Package Layout
+
+```
+lend/                        # Main Python package
+├── hardware/                # xArm control + calibrated positions
+│   ├── arm_control.py
+│   └── positions.py
+├── vision/
+│   └── classifier.py        # Claude-based image classification
+├── data/
+│   ├── donations.py          # JSON-backed donation log
+│   ├── pipeline_state.py     # Thread-safe in-memory state
+│   └── runtime_state.py      # File-based state for frontend sync
+├── pipeline/
+│   └── main.py               # 5-state detection/sorting pipeline
+├── api/
+│   └── server.py             # Flask REST API
+└── agents/                   # Claude Agent SDK orchestration
+    ├── orchestrator.py
+    ├── email_agent.py
+    ├── shelter_registry.py
+    └── mcp_bridge.py
+tools/                        # CLI scripts (not a package)
+static/                       # dashboard.html
+docs/                         # QUICKSTART, DASHBOARD, AGENTS, VERIFICATION
+```
+
+### State Machine (lend/pipeline/main.py)
 
 The core pipeline runs as a 5-state finite state machine:
 
@@ -98,38 +126,38 @@ Motion detection parameters:
 
 ### Threading Model
 
-Both `main.py` and `test_pipeline.py` use threading to prevent blocking:
+Both `lend/pipeline/main.py` and `tools/test_pipeline.py` use threading to prevent blocking:
 - **Camera capture**: Background thread (continuous frame reading)
 - **UI/Display**: Main thread (OpenCV window must be on main thread on Windows)
-- **AI/Sorting**: Worker thread in `test_pipeline.py` (async processing)
+- **AI/Sorting**: Worker thread in `tools/test_pipeline.py` (async processing)
 
 ### Module Responsibilities
 
-**arm_control.py** - Low-level xArm USB control
+**lend/hardware/arm_control.py** - Low-level xArm USB control
 - `connect()`: Connect to xArm (must call first)
 - `move_to_pose(pose)`: Move all 6 servos to a position
 - `move_body(pose)`: Move servos 2-6 only (preserves gripper state)
 - `gripper_open()` / `gripper_close()`: Gripper control with pressure relief
 - `sort_to_bin(category)`: Full pick-and-place sequence (HOME → PICKUP → grip → HOME → BIN → release → HOME)
 
-**positions.py** - Calibrated servo positions
+**lend/hardware/positions.py** - Calibrated servo positions
 - Each pose is a list of 6 servo values (0-1000): `[gripper, wrist_rotation, wrist, elbow, shoulder, base]`
 - Key positions: `HOME`, `PICKUP`, `BIN_FRUIT`, `BIN_SNACK`, `BIN_DRINK`
 - `CATEGORY_MAP`: Maps vision categories to bin positions
 
-**vision.py** - Claude-based classification
+**lend/vision/classifier.py** - Claude-based classification
 - `classify_frame(frame_bytes)`: Fast classification (returns category string only)
 - `classify_frame_detailed(frame_bytes)`: Full classification with metadata (item_name, weight, expiry)
 - Auto-strips markdown code fences from Claude responses
 - Validates categories with fallback to "snack"
 
-**donations.py** - JSON-backed donation log
+**lend/data/donations.py** - JSON-backed donation log
 - `log_donation(...)`: Append new donation record
 - `get_all()`: Return all records
 - `get_stats()`: Summary stats (total items, weight, donors, by_category)
 - Data stored in `donations.json` with auto-incrementing IDs
 
-**api.py** - Flask REST API
+**lend/api/server.py** - Flask REST API
 - `GET /donations`: All donation records
 - `GET /donations/recent?limit=N`: Latest N records (default 10)
 - `GET /stats`: Summary statistics
@@ -147,7 +175,7 @@ The pressure relief pattern (`_gripper_relief()`) prevents servo strain and moto
 
 ## Data Storage
 
-- **Donations log**: `donations.json` (JSON array)
+- **Donations log**: `donations.json` (JSON array, at project root)
 - **Captured images**: `images/donation_N.jpg`
 
 Each donation record includes:
@@ -167,19 +195,19 @@ Each donation record includes:
 ## Common Development Patterns
 
 ### Adding a New Bin Position
-1. Run `python calibrate.py`
+1. Run `python tools/calibrate.py`
 2. Physically move arm to new bin position
-3. Copy output to `positions.py` (e.g., `BIN_HYGIENE = [...]`)
+3. Copy output to `lend/hardware/positions.py` (e.g., `BIN_HYGIENE = [...]`)
 4. Add to `CATEGORY_MAP` dict
-5. Update `DETAILED_PROMPT` in `vision.py` to recognize new category
+5. Update `DETAILED_PROMPT` in `lend/vision/classifier.py` to recognize new category
 
 ### Modifying Vision Classification
-- Edit `DETAILED_PROMPT` or `SIMPLE_PROMPT` in `vision.py`
-- Test with: `python test_vision.py` or `python vision.py` (uses `camera-test.jpg`)
+- Edit `DETAILED_PROMPT` or `SIMPLE_PROMPT` in `lend/vision/classifier.py`
+- Test with: `python tools/test_vision.py` or `python -m lend.vision.classifier` (uses `camera-test.jpg`)
 - Classification includes automatic fallback if JSON parsing fails
 
 ### Tuning Motion Detection
-Edit constants in `main.py`:
+Edit constants in `lend/pipeline/main.py`:
 - `MOTION_THRESHOLD`: Lower = more sensitive (default 30)
 - `MOTION_MIN_AREA`: Larger = ignore small movements (default 5000 px²)
 - `SETTLE_TIME`: Wait time after motion stops (default 1.5s)
@@ -189,7 +217,8 @@ Edit constants in `main.py`:
 
 - The arm must be connected via USB before calling `arm_control.connect()`
 - Camera warm-up (60 frames) is essential for consistent auto-exposure
-- Missing `import os` in `main.py` (line 26 uses `os.path` before import) - add `import os` at top
-- Claude vision responses sometimes include markdown code fences - stripped by `vision.py`
+- Claude vision responses sometimes include markdown code fences - stripped by `lend/vision/classifier.py`
 - All timestamps use UTC timezone for consistency
 - Camera uses DirectShow backend (`cv2.CAP_DSHOW`) on Windows with fallback
+- Runtime data files (`donations.json`, `pipeline_state.json`, `latest_frame.jpg`, `images/`) stay at project root
+- `lend/__init__.py` exports `PROJECT_ROOT` used by all modules for file paths

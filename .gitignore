@@ -19,6 +19,10 @@ Thumbs.db
 
 # Runtime data
 donations.json
+shelters.json
 images/
 pipeline_state.json
 latest_frame.jpg
+
+# Packaging
+*.egg-info/

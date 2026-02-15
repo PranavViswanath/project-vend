@@ -18,8 +18,8 @@ import os
 import time
 from flask import Flask, jsonify, request, send_file, Response
 from flask_cors import CORS
-import donations
-from runtime_state import read_pipeline_state, LATEST_FRAME_PATH
+from lend.data import donations
+from lend.data.runtime_state import read_pipeline_state, LATEST_FRAME_PATH
 
 app = Flask(__name__)
 CORS(app)  # allow frontend to call from any origin

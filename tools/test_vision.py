@@ -2,7 +2,7 @@
 
 import os
 import cv2
-from vision import classify_frame
+from lend.vision.classifier import classify_frame
 
 if not os.getenv("ANTHROPIC_API_KEY"):
     print("Set ANTHROPIC_API_KEY first:")

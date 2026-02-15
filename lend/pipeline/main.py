@@ -19,13 +19,14 @@ import time
 import cv2
 import numpy as np
 
-from vision import classify_frame_detailed
-import arm_control
-import donations
-import pipeline_state
-from positions import HOME
+from lend import PROJECT_ROOT
+from lend.vision.classifier import classify_frame_detailed
+from lend.hardware import arm_control
+from lend.data import donations
+from lend.data import pipeline_state
+from lend.hardware.positions import HOME
 
-IMAGES_DIR = os.path.join(os.path.dirname(__file__), "images")
+IMAGES_DIR = os.path.join(PROJECT_ROOT, "images")
 os.makedirs(IMAGES_DIR, exist_ok=True)
 
 # ── Tuning knobs ──────────────────────────────────────────────────────────────

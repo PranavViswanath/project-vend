@@ -18,7 +18,7 @@ Usage:
 import argparse
 import time
 import cv2
-from vision import classify_frame
+from lend.vision.classifier import classify_frame
 
 # Colors for display (BGR)
 COLORS = {
