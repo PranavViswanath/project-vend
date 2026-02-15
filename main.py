@@ -14,6 +14,7 @@ Controls (OpenCV window):
 """
 
 import argparse
+import os
 import time
 import cv2
 import numpy as np
@@ -21,6 +22,7 @@ import numpy as np
 from vision import classify_frame_detailed
 import arm_control
 import donations
+import pipeline_state
 from positions import HOME
 
 IMAGES_DIR = os.path.join(os.path.dirname(__file__), "images")
@@ -84,6 +86,9 @@ def main(camera_index: int = 1, use_arm: bool = True):  # Default to ArduCam
     print("  Press Q in the window to quit.")
     print("=" * 60 + "\n")
 
+    # Broadcast initial state
+    pipeline_state.set_state("WARMUP", camera_active=True)
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -103,6 +108,7 @@ def main(camera_index: int = 1, use_arm: bool = True):  # Default to ArduCam
             if frame_count >= WARMUP_FRAMES:
                 prev_gray = gray.copy()
                 state = "WATCHING"
+                pipeline_state.set_state("WATCHING", motion_area=0)
                 print("[STATE] WATCHING – waiting for item...")
 
         # ── WATCHING: look for motion (item being placed) ─────────────────────
@@ -110,9 +116,11 @@ def main(camera_index: int = 1, use_arm: bool = True):  # Default to ArduCam
             motion, area = detect_motion(prev_gray, gray)
             cv2.putText(display, "WATCHING for item...", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            pipeline_state.set_state("WATCHING", motion_area=area)
             if motion:
                 state = "SETTLING"
                 motion_stopped_at = None
+                pipeline_state.set_state("SETTLING", motion_area=area)
                 print(f"[STATE] SETTLING – motion detected (area={area})")
             prev_gray = gray.copy()
 
@@ -121,6 +129,7 @@ def main(camera_index: int = 1, use_arm: bool = True):  # Default to ArduCam
             motion, area = detect_motion(prev_gray, gray)
             cv2.putText(display, "Item detected, settling...", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 165, 255), 2)
+            pipeline_state.set_state("SETTLING", motion_area=area)
             if motion:
                 motion_stopped_at = None   # still moving
             else:
@@ -128,6 +137,7 @@ def main(camera_index: int = 1, use_arm: bool = True):  # Default to ArduCam
                     motion_stopped_at = time.time()
                 elif time.time() - motion_stopped_at >= SETTLE_TIME:
                     state = "CLASSIFYING"
+                    pipeline_state.set_state("CLASSIFYING")
                     print("[STATE] CLASSIFYING – sending frame to Claude...")
             prev_gray = gray.copy()
 
@@ -147,12 +157,16 @@ def main(camera_index: int = 1, use_arm: bool = True):  # Default to ArduCam
             try:
                 info = classify_frame_detailed(buf.tobytes())
                 category = info["category"]
+                item_name = info.get('item_name', 'unknown')
                 print("=" * 40)
                 print(f"  CATEGORY : {category.upper()}")
-                print(f"  ITEM     : {info.get('item_name', 'unknown')}")
+                print(f"  ITEM     : {item_name}")
                 print(f"  WEIGHT   : {info.get('estimated_weight_lbs', '?')} lbs")
                 print(f"  EXPIRY   : {info.get('estimated_expiry', 'N/A')}")
                 print("=" * 40)
+
+                # Broadcast classification result
+                pipeline_state.set_state("CLASSIFYING", last_category=category, last_item=item_name)
 
                 # Save frame and log
                 img_name = f"donation_{len(donations.get_all()) + 1}.jpg"
@@ -191,9 +205,11 @@ def main(camera_index: int = 1, use_arm: bool = True):  # Default to ArduCam
             remaining = max(0, COOLDOWN - (time.time() - cooldown_start))
             cv2.putText(display, f"Cooldown {remaining:.1f}s", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (128, 128, 128), 2)
+            pipeline_state.set_state("COOLDOWN", cooldown_remaining=remaining)
             if remaining <= 0:
                 prev_gray = gray.copy()
                 state = "WATCHING"
+                pipeline_state.set_state("WATCHING", motion_area=0)
                 print("[STATE] WATCHING – ready for next item...")
 
         # ── HUD ───────────────────────────────────────────────────────────────
@@ -206,6 +222,9 @@ def main(camera_index: int = 1, use_arm: bool = True):  # Default to ArduCam
 
     cap.release()
     cv2.destroyAllWindows()
+
+    # Broadcast shutdown state
+    pipeline_state.set_state("IDLE", camera_active=False)
 
     if use_arm:
         try:
