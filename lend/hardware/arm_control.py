@@ -7,8 +7,12 @@ Provides:
 - sort_to_bin(category): full pick-and-place cycle
 """
 from time import sleep
-import xarm
 from lend.hardware.positions import HOME, PICKUP, CATEGORY_MAP
+
+try:
+    import xarm
+except ImportError:
+    xarm = None
 
 MOVE_MS = 1500  # movement duration in milliseconds
 GRIPPER_OPEN = 50    # adjust based on your calibration
@@ -20,6 +24,8 @@ arm = None
 def connect():
     """Connect to xArm over USB. Call once before using any arm functions."""
     global arm
+    if xarm is None:
+        raise RuntimeError("xarm package not installed. Install with: pip install xarm")
     if arm is None:
         arm = xarm.Controller('USB')
         print("Connected to xArm!")
@@ -68,52 +74,60 @@ def _gripper_relief():
 
 
 def sort_to_bin(category: str):
-    """Pick item from PICKUP zone and place in the appropriate bin.
-    
+    """Pick item, show it to bin, shake to dispense, return and release.
+
+    Flow: PICKUP → grip → BIN → wrist 180 → wrist 180 back → PICKUP → release → HOME
+
     Args:
         category: one of 'fruit', 'snack', 'drink'
     """
     _require_arm()
     if category not in CATEGORY_MAP:
         raise ValueError(f"Unknown category: {category}. Use one of {list(CATEGORY_MAP.keys())}")
-    
+
     bin_pose = CATEGORY_MAP[category]
-    
+
     print(f"Sorting item to {category} bin...")
-    
-    # 1. Start at home with gripper open
-    print("  -> HOME")
-    move_to_pose(HOME)
-    gripper_open()
-    
-    # 2. Move to pickup zone (gripper stays open)
+
+    # 1. Bend to pickup zone
     print("  -> PICKUP")
     move_body(PICKUP)
     sleep(0.3)
-    
-    # 3. Grab item
-    print("  -> GRIP")
+
+    # 2. Grip the item
+    print("  -> GRIP CLOSE")
     gripper_close()
     sleep(0.3)
-    
-    # 4. Lift (gripper stays closed)
-    print("  -> HOME (lift)")
-    move_body(HOME)
-    
-    # 5. Move to target bin (gripper stays closed)
+
+    # 3. Move to bin position (still gripping)
     print(f"  -> BIN ({category})")
     move_body(bin_pose)
     sleep(0.3)
-    
-    # 6. Release item
-    print("  -> RELEASE")
+
+    # 4. Wrist rotation 180 (servo 2 / index 1: ~500 center → ~0)
+    print("  -> WRIST 180")
+    arm.setPosition(2, 0, MOVE_MS, True)
+    sleep(0.3)
+
+    # 5. Wrist rotation 180 back (reverse to ~1000)
+    print("  -> WRIST 180 REVERSE")
+    arm.setPosition(2, 1000, MOVE_MS, True)
+    sleep(0.3)
+
+    # 6. Return to pickup (still gripping)
+    print("  -> PICKUP (return)")
+    move_body(PICKUP)
+    sleep(0.3)
+
+    # 7. Open gripper to release
+    print("  -> GRIP OPEN")
     gripper_open()
     sleep(0.3)
-    
-    # 7. Return home
+
+    # 8. Return home
     print("  -> HOME")
     move_to_pose(HOME)
-    
+
     print("  Done!")
 
 

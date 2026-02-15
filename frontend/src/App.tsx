@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useApi, API_BASE } from "./useApi";
 import type { PipelineState, Donation, Stats } from "./types";
 import "./App.css";
@@ -24,7 +25,20 @@ const CAT_COLORS: Record<string, string> = {
 
 function PipelineStage({ state }: { state: PipelineState | null }) {
   const isActive = state != null && state.mode !== "idle" && state.mode !== "error";
+  const isProcessing = state?.mode === "processing";
   const showResult = state?.mode === "classified" && state.last_result;
+  const [scanning, setScanning] = useState(false);
+
+  const handleScan = async () => {
+    setScanning(true);
+    try {
+      await fetch(`${API_BASE}/pipeline/capture`, { method: "POST" });
+    } catch (e) {
+      console.error("Scan failed:", e);
+    } finally {
+      setScanning(false);
+    }
+  };
 
   return (
     <section className="card pipeline">
@@ -44,6 +58,13 @@ function PipelineStage({ state }: { state: PipelineState | null }) {
             src={`${API_BASE}/pipeline/stream`}
             alt="Live camera feed"
           />
+          <button
+            className="scan-btn"
+            onClick={handleScan}
+            disabled={scanning || isProcessing}
+          >
+            {scanning || isProcessing ? "Scanning..." : "SCAN"}
+          </button>
         </div>
 
         {showResult && state.last_result && (

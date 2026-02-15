@@ -15,11 +15,19 @@ Usage:
 
 import argparse
 import os
+import threading
 import time
 from flask import Flask, jsonify, request, send_file, Response
 from flask_cors import CORS
+from lend import PROJECT_ROOT
 from lend.data import donations
-from lend.data.runtime_state import read_pipeline_state, LATEST_FRAME_PATH
+from lend.data.runtime_state import read_pipeline_state, write_pipeline_state, LATEST_FRAME_PATH
+from lend.vision.classifier import classify_frame_detailed
+
+IMAGES_DIR = os.path.join(PROJECT_ROOT, "images")
+os.makedirs(IMAGES_DIR, exist_ok=True)
+
+_capture_lock = threading.Lock()
 
 app = Flask(__name__)
 CORS(app)  # allow frontend to call from any origin
@@ -78,6 +86,73 @@ def pipeline_stream():
     """MJPEG stream for smooth live camera feed."""
     return Response(_generate_mjpeg(),
                     mimetype="multipart/x-mixed-replace; boundary=frame")
+
+
+@app.route("/pipeline/capture", methods=["POST"])
+def pipeline_capture():
+    """Capture the current frame, classify with Claude, and log the donation."""
+    if not _capture_lock.acquire(blocking=False):
+        return jsonify({"error": "Capture already in progress"}), 409
+
+    try:
+        write_pipeline_state({
+            "mode": "processing",
+            "status_text": "Classifying with Claude...",
+            "last_result": None,
+        })
+
+        if not os.path.exists(LATEST_FRAME_PATH):
+            write_pipeline_state({
+                "mode": "error",
+                "status_text": "No camera frame available",
+            })
+            return jsonify({"error": "No frame available"}), 404
+
+        with open(LATEST_FRAME_PATH, "rb") as f:
+            frame_bytes = f.read()
+
+        info = classify_frame_detailed(frame_bytes)
+        category = info["category"]
+
+        img_name = f"donation_{len(donations.get_all()) + 1}.jpg"
+        img_path = os.path.join(IMAGES_DIR, img_name)
+        with open(img_path, "wb") as f:
+            f.write(frame_bytes)
+
+        record = donations.log_donation(
+            category=category,
+            item_name=info.get("item_name", "unknown"),
+            estimated_weight_lbs=info.get("estimated_weight_lbs"),
+            estimated_expiry=info.get("estimated_expiry"),
+            image_path=img_path,
+        )
+
+        result = {
+            "donation_id": record["id"],
+            "category": category,
+            "item_name": info.get("item_name", "unknown"),
+            "estimated_weight_lbs": info.get("estimated_weight_lbs"),
+            "estimated_expiry": info.get("estimated_expiry"),
+            "image_path": img_path,
+        }
+
+        write_pipeline_state({
+            "mode": "classified",
+            "status_text": f"Classified: {info.get('item_name', 'unknown')} ({category})",
+            "last_result": result,
+        })
+
+        return jsonify(result)
+
+    except Exception as e:
+        write_pipeline_state({
+            "mode": "error",
+            "status_text": f"Classification error: {e}",
+        })
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        _capture_lock.release()
 
 
 if __name__ == "__main__":

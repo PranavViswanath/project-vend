@@ -105,6 +105,30 @@
   width: 100%;
   display: block;
 }
+.scan-btn {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 0.7rem 2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  z-index: 10;
+}
+.scan-btn:hover:not(:disabled) {
+  background: #9a4e0f;
+  transform: scale(1.03);
+}
+.scan-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 .camera-overlay {
   position: absolute;
   inset: 0;

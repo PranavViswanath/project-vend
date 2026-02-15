@@ -40,7 +40,41 @@ for name, instruction in instructions.items():
         arm.servoOff(i)
 
 print("\n" + "=" * 60)
-print("Copy these into positions.py:")
+print("Recorded positions:")
 print("=" * 60)
 for name, pose in positions.items():
     print(f"{name} = {pose}")
+
+# Auto-update positions.py
+import os
+positions_path = os.path.join(os.path.dirname(__file__), "..", "lend", "hardware", "positions.py")
+positions_path = os.path.abspath(positions_path)
+
+content = '''"""Calibrated positions for Project Lend food bank.
+
+Run `python tools/calibrate.py` and positions are saved here automatically.
+Each pose is a list of 6 servo positions (units 0-1000), servos 1-6.
+"""
+
+# Safe resting position
+HOME = {HOME}
+
+# Donation zone (where people place items)
+PICKUP = {PICKUP}
+
+# Bin positions
+BIN_FRUIT = {BIN_FRUIT}   # Apples, bananas, oranges
+BIN_SNACK = {BIN_SNACK}   # Chips, granola bars, candy
+BIN_DRINK = {BIN_DRINK}   # Water bottles, juice, soda
+
+# Map vision categories to bin positions
+CATEGORY_MAP = {{
+    "fruit": BIN_FRUIT,
+    "snack": BIN_SNACK,
+    "drink": BIN_DRINK,
+}}
+'''.format(**positions)
+
+with open(positions_path, "w") as f:
+    f.write(content)
+print(f"\nPositions saved to {positions_path}")

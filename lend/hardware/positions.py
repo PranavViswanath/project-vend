@@ -1,19 +1,19 @@
 """Calibrated positions for Project Lend food bank.
 
-Run `python calibrate.py` and paste your recorded values here.
+Run `python tools/calibrate.py` and positions are saved here automatically.
 Each pose is a list of 6 servo positions (units 0-1000), servos 1-6.
 """
 
 # Safe resting position
-HOME = [505, 501, 109, 526, 511, 508]
+HOME = [500, 501, 108, 486, 509, 509]
 
 # Donation zone (where people place items)
-PICKUP = [501, 501, 301, 895, 508, 507]
+PICKUP = [499, 501, 109, 611, 343, 509]
 
 # Bin positions
-BIN_FRUIT = [501, 501, 301, 821, 507, 828]   # Apples, bananas, oranges
-BIN_SNACK = [501, 501, 301, 821, 508, 979]   # Chips, granola bars, candy
-BIN_DRINK = [501, 501, 301, 801, 509, 720]   # Water bottles, juice, soda
+BIN_FRUIT = [500, 501, 109, 510, 525, 877]   # Apples, bananas, oranges
+BIN_SNACK = [499, 501, 108, 510, 525, 877]   # Chips, granola bars, candy
+BIN_DRINK = [500, 501, 108, 510, 525, 109]   # Water bottles, juice, soda
 
 # Map vision categories to bin positions
 CATEGORY_MAP = {
