@@ -20,3 +20,5 @@ Thumbs.db
 # Runtime data
 donations.json
 images/
+pipeline_state.json
+latest_frame.jpg

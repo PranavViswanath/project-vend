@@ -11,7 +11,9 @@ import anthropic
 # Valid Anthropic model alias; override via CLAUDE_VISION_MODEL if needed.
 MODEL = os.getenv("CLAUDE_VISION_MODEL", "claude-3-5-haiku-latest")
 
-client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+# Users sometimes set the key like "{sk-ant-...}" in PowerShell; trim wrapping braces.
+API_KEY = (os.getenv("ANTHROPIC_API_KEY") or "").strip().strip("{}")
+client = anthropic.Anthropic(api_key=API_KEY or None)
 
 DETAILED_PROMPT = """Analyze the main food or beverage item in this image.
 Return ONLY a JSON object with these fields (no other text):

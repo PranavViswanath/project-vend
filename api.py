@@ -14,21 +14,15 @@ Usage:
 """
 
 import argparse
-import cv2
-import threading
-from flask import Flask, jsonify, request, Response
+import os
+import time
+from flask import Flask, jsonify, request, send_file, Response
 from flask_cors import CORS
 import donations
-import pipeline_state
+from runtime_state import read_pipeline_state, LATEST_FRAME_PATH
 
 app = Flask(__name__)
 CORS(app)  # allow frontend to call from any origin
-
-# Camera streaming globals
-camera_lock = threading.Lock()
-latest_frame = None
-camera_thread = None
-camera_running = False
 
 
 @app.route("/donations", methods=["GET"])
@@ -48,90 +42,48 @@ def stats():
     return jsonify(donations.get_stats())
 
 
-@app.route("/state", methods=["GET"])
-def state():
-    """Get current pipeline state for real-time UI updates."""
-    return jsonify(pipeline_state.get_state())
+@app.route("/pipeline/state", methods=["GET"])
+def pipeline_state():
+    return jsonify(read_pipeline_state())
 
 
-@app.route("/video_feed")
-def video_feed():
-    """MJPEG streaming endpoint for live camera feed."""
-    return Response(
-        generate_mjpeg(),
-        mimetype="multipart/x-mixed-replace; boundary=frame"
-    )
+@app.route("/pipeline/frame", methods=["GET"])
+def pipeline_frame():
+    if not os.path.exists(LATEST_FRAME_PATH):
+        return jsonify({"error": "no frame available"}), 404
+    return send_file(LATEST_FRAME_PATH, mimetype="image/jpeg")
 
 
-def generate_mjpeg():
-    """Generator function for MJPEG stream."""
-    global latest_frame
+def _generate_mjpeg():
+    """Yield MJPEG frames for smooth browser video."""
+    last_data = None
     while True:
-        with camera_lock:
-            if latest_frame is None:
-                continue
-            frame = latest_frame.copy()
-
-        # Encode frame as JPEG
-        ret, jpeg = cv2.imencode(".jpg", frame)
-        if not ret:
-            continue
-
-        # Yield MJPEG frame
-        yield (
-            b"--frame\r\n"
-            b"Content-Type: image/jpeg\r\n\r\n" + jpeg.tobytes() + b"\r\n"
-        )
+        if os.path.exists(LATEST_FRAME_PATH):
+            try:
+                with open(LATEST_FRAME_PATH, "rb") as f:
+                    frame = f.read()
+                # Only send valid JPEGs (starts with FFD8, ends with FFD9)
+                if frame and frame[:2] == b'\xff\xd8' and frame[-2:] == b'\xff\xd9':
+                    last_data = frame
+            except Exception:
+                pass
+        if last_data:
+            yield (b"--frame\r\n"
+                   b"Content-Type: image/jpeg\r\n\r\n" + last_data + b"\r\n")
+        time.sleep(0.033)  # ~30 FPS
 
 
-def camera_capture_thread(camera_index):
-    """Background thread for continuous camera capture."""
-    global latest_frame, camera_running
-
-    cap = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
-    if not cap.isOpened():
-        cap = cv2.VideoCapture(camera_index)  # Fallback without DirectShow
-
-    if not cap.isOpened():
-        print(f"❌ Failed to open camera {camera_index}")
-        return
-
-    print(f"✅ Camera {camera_index} opened for streaming")
-    camera_running = True
-
-    while camera_running:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        with camera_lock:
-            latest_frame = frame
-
-    cap.release()
-    print("Camera capture thread stopped")
+@app.route("/pipeline/stream")
+def pipeline_stream():
+    """MJPEG stream for smooth live camera feed."""
+    return Response(_generate_mjpeg(),
+                    mimetype="multipart/x-mixed-replace; boundary=frame")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Project Lend API")
     parser.add_argument("--port", type=int, default=5000)
-    parser.add_argument("--camera", type=int, default=1, help="Camera index (default: 1 for ArduCam)")
     args = parser.parse_args()
 
-    # Start camera capture in background thread
-    camera_thread = threading.Thread(
-        target=camera_capture_thread,
-        args=(args.camera,),
-        daemon=True
-    )
-    camera_thread.start()
-
     print(f"Starting API on http://localhost:{args.port}")
-    print(f"Camera streaming from index {args.camera}")
-    print(f"Video feed: http://localhost:{args.port}/video_feed")
-
-    try:
-        app.run(host="0.0.0.0", port=args.port, debug=True, use_reloader=False)
-    finally:
-        camera_running = False
-        if camera_thread:
-            camera_thread.join(timeout=2.0)
+    app.run(host="0.0.0.0", port=args.port, debug=True)

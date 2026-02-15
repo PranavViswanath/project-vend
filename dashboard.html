@@ -5,352 +5,105 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Lend - Autonomous Food Bank</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
             background: linear-gradient(135deg, #f5f1eb 0%, #e8dfd3 100%);
-            color: #2d2416;
-            min-height: 100vh;
-            padding: 2rem;
+            color: #2d2416; min-height: 100vh; padding: 2rem;
         }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 3rem;
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        .logo-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; animation: fadeIn 0.8s ease-out; }
+        .logo-container { display: flex; align-items: center; justify-content: center; gap: 1.2rem; margin-bottom: 0.6rem; }
         .treehacks-logo {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #4a7c59 0%, #3d6b4a 100%);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 32px;
-            font-weight: bold;
+            width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #4a7c59 0%, #3d6b4a 100%); color: white; font-size: 30px;
+        }
+        h1 { font-size: 3.2rem; letter-spacing: -0.02em; }
+        .subtitle { color: #7a6f5d; font-size: 1.15rem; }
+        .partner { color: #9a8f7d; margin-top: 0.6rem; font-style: italic; }
+
+        .pipeline-stage, .stat-card, .breakdown, .feed {
+            background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(45, 36, 22, 0.08);
         }
 
-        h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: #2d2416;
-            letter-spacing: -0.02em;
+        .pipeline-stage { padding: 1.25rem; margin-bottom: 1.5rem; animation: slideUp 0.8s ease-out 0.1s both; }
+        .stage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
+        .stage-title { font-size: 1.2rem; font-weight: 700; }
+        .stage-status { color: #7a6f5d; font-weight: 600; font-size: 0.9rem; }
+        .stage-body { min-height: 320px; border: 1px solid #e8dfd3; border-radius: 12px; overflow: hidden; position: relative; background: #f8f5f1; }
+        .camera-view { width: 100%; min-height: 320px; display: block; object-fit: cover; }
+        .camera-overlay {
+            position: absolute; left: 10px; top: 10px; background: rgba(0,0,0,0.55); color: #fff;
+            padding: 0.35rem 0.6rem; border-radius: 8px; font-size: 0.8rem;
         }
-
-        .subtitle {
-            font-size: 1.25rem;
-            color: #7a6f5d;
-            font-weight: 400;
-            margin-top: 0.5rem;
+        .claude-result { padding: 1.2rem; animation: fadeInSlide 0.45s ease-out; }
+        .claude-badge {
+            display: inline-block; margin-bottom: 0.9rem; border-radius: 999px; background: #efe6dc;
+            color: #6f5a44; padding: 0.3rem 0.7rem; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.03em;
         }
-
-        .partner {
-            font-size: 0.95rem;
-            color: #9a8f7d;
-            margin-top: 1rem;
-            font-style: italic;
+        .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.8rem; }
+        .result-cell { border: 1px solid #eadfce; border-radius: 10px; padding: 0.75rem; background: #fff; }
+        .result-label {
+            font-size: 0.7rem; color: #7a6f5d; text-transform: uppercase; letter-spacing: 0.05em;
+            font-weight: 700; margin-bottom: 0.28rem;
         }
+        .result-value { font-weight: 600; }
 
-        /* Stats Grid */
         .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 3rem;
-            animation: slideUp 0.8s ease-out 0.2s both;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.2rem; margin-bottom: 1.5rem; animation: slideUp 0.8s ease-out 0.2s both;
         }
-
-        .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 4px 24px rgba(45, 36, 22, 0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 32px rgba(45, 36, 22, 0.12);
-        }
-
+        .stat-card { padding: 1.5rem; }
         .stat-label {
-            font-size: 0.875rem;
-            color: #7a6f5d;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
+            font-size: 0.82rem; color: #7a6f5d; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 0.6rem;
         }
+        .stat-value { font-size: 2.7rem; font-weight: 700; line-height: 1; }
+        .stat-unit { font-size: 1.15rem; color: #9a8f7d; margin-left: 0.2rem; }
 
-        .stat-value {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #2d2416;
-            line-height: 1;
-        }
-
-        .stat-unit {
-            font-size: 1.25rem;
-            color: #9a8f7d;
-            margin-left: 0.25rem;
-        }
-
-        /* Category Breakdown */
-        .breakdown {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 4px 24px rgba(45, 36, 22, 0.08);
-            margin-bottom: 3rem;
-            animation: slideUp 0.8s ease-out 0.3s both;
-        }
-
-        .breakdown-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2d2416;
-            margin-bottom: 1.5rem;
-        }
-
-        .category-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .category-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .category-label {
-            min-width: 80px;
-            font-weight: 500;
-            color: #2d2416;
-            text-transform: capitalize;
-        }
-
+        .breakdown { padding: 1.5rem; margin-bottom: 1.5rem; animation: slideUp 0.8s ease-out 0.3s both; }
+        .breakdown-title, .feed-title { font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem; }
+        .category-bars { display: flex; flex-direction: column; gap: 0.8rem; }
+        .category-item { display: flex; align-items: center; gap: 0.9rem; }
+        .category-label { min-width: 80px; text-transform: capitalize; font-weight: 600; }
         .category-bar {
-            flex: 1;
-            height: 36px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            padding: 0 1rem;
-            color: white;
-            font-weight: 600;
-            transition: all 0.5s ease-out;
+            flex: 1; height: 32px; border-radius: 8px; display: flex; align-items: center;
+            padding: 0 0.8rem; color: white; font-weight: 700; transition: width 0.4s ease;
         }
-
         .category-fruit { background: linear-gradient(90deg, #e8a87c 0%, #d89868 100%); }
         .category-snack { background: linear-gradient(90deg, #c38d9e 0%, #b17d8e 100%); }
         .category-drink { background: linear-gradient(90deg, #85b6d1 0%, #6fa2bd 100%); }
 
-        /* Live Feed */
-        .feed {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 4px 24px rgba(45, 36, 22, 0.08);
-            animation: slideUp 0.8s ease-out 0.4s both;
-        }
-
-        .feed-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #2d2416;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .live-indicator {
-            width: 8px;
-            height: 8px;
-            background: #4a7c59;
-            border-radius: 50%;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        .donation-list {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-
-        .donation-card {
-            border: 1px solid #e8dfd3;
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: all 0.3s;
-            animation: fadeInSlide 0.5s ease-out;
-        }
-
-        .donation-card:hover {
-            border-color: #c9b8a3;
-            background: #faf8f5;
-        }
-
-        .donation-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 1rem;
-        }
-
-        .donation-id {
-            font-size: 0.875rem;
-            color: #9a8f7d;
-            font-weight: 600;
-        }
-
-        .donation-time {
-            font-size: 0.875rem;
-            color: #9a8f7d;
-        }
-
-        .donation-item {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #2d2416;
-            margin-bottom: 0.75rem;
-        }
-
-        .donation-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 0.75rem;
-        }
-
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .detail-label {
-            font-size: 0.75rem;
-            color: #7a6f5d;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .detail-value {
-            font-size: 0.95rem;
-            color: #2d2416;
-            font-weight: 500;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: capitalize;
-        }
-
+        .feed { padding: 1.5rem; animation: slideUp 0.8s ease-out 0.4s both; }
+        .feed-title { display: flex; align-items: center; gap: 0.5rem; }
+        .live-indicator { width: 8px; height: 8px; border-radius: 50%; background: #4a7c59; animation: pulse 2s ease-in-out infinite; }
+        .donation-list { display: flex; flex-direction: column; gap: 0.8rem; max-height: 560px; overflow-y: auto; }
+        .donation-card { border: 1px solid #e8dfd3; border-radius: 12px; padding: 1rem; background: #fff; animation: fadeInSlide 0.4s ease-out; }
+        .donation-header { display: flex; justify-content: space-between; margin-bottom: 0.55rem; }
+        .donation-id, .donation-time { font-size: 0.85rem; color: #9a8f7d; font-weight: 600; }
+        .donation-item { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.6rem; }
+        .donation-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.65rem; }
+        .detail-label { font-size: 0.72rem; color: #7a6f5d; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 0.2rem; }
+        .detail-value { font-size: 0.95rem; font-weight: 600; }
+        .badge { display: inline-block; padding: 0.2rem 0.62rem; border-radius: 6px; font-size: 0.84rem; font-weight: 700; text-transform: capitalize; }
         .badge-fruit { background: #ffecd6; color: #c9762c; }
         .badge-snack { background: #f7e0e8; color: #a35870; }
         .badge-drink { background: #d9edf7; color: #4a7c9e; }
 
-        /* Loading State */
-        .loading {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: #7a6f5d;
-        }
-
+        .loading, .empty-state { text-align: center; padding: 2.2rem 1.2rem; color: #7a6f5d; }
+        .empty-icon { font-size: 2.6rem; margin-bottom: 0.6rem; }
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #e8dfd3;
-            border-top-color: #4a7c59;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
+            width: 36px; height: 36px; border: 4px solid #e8dfd3; border-top-color: #4a7c59;
+            border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 0.8rem;
         }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInSlide {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem 2rem;
-            color: #9a8f7d;
-        }
-
-        .empty-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(24px);} to { opacity: 1; transform: translateY(0);} }
+        @keyframes fadeInSlide { from { opacity: 0; transform: translateX(-14px);} to { opacity: 1; transform: translateX(0);} }
+        @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+        @keyframes spin { to { transform: rotate(360deg);} }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
             <div class="logo-container">
                 <div class="treehacks-logo">🌲</div>
@@ -362,7 +115,19 @@
             <div class="partner">Powered by Claude AI • Ecumenical Hunger Program - Palo Alto</div>
         </div>
 
-        <!-- Stats Grid -->
+        <div class="pipeline-stage">
+            <div class="stage-header">
+                <div class="stage-title">Live Pipeline Stage</div>
+                <div class="stage-status" id="pipeline-status">Waiting for pipeline...</div>
+            </div>
+            <div class="stage-body" id="stage-body">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Waiting for camera stream...
+                </div>
+            </div>
+        </div>
+
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Total Items</div>
@@ -370,10 +135,7 @@
             </div>
             <div class="stat-card">
                 <div class="stat-label">Weight Collected</div>
-                <div class="stat-value">
-                    <span id="total-weight">0</span>
-                    <span class="stat-unit">lbs</span>
-                </div>
+                <div class="stat-value"><span id="total-weight">0</span><span class="stat-unit">lbs</span></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Unique Donors</div>
@@ -381,68 +143,46 @@
             </div>
         </div>
 
-        <!-- Category Breakdown -->
         <div class="breakdown">
             <div class="breakdown-title">Category Breakdown</div>
             <div class="category-bars">
                 <div class="category-item">
                     <div class="category-label">Fruit</div>
-                    <div class="category-bar category-fruit" id="bar-fruit" style="width: 0%">
-                        <span id="count-fruit">0</span>
-                    </div>
+                    <div class="category-bar category-fruit" id="bar-fruit" style="width: 0%"><span id="count-fruit">0</span></div>
                 </div>
                 <div class="category-item">
                     <div class="category-label">Snack</div>
-                    <div class="category-bar category-snack" id="bar-snack" style="width: 0%">
-                        <span id="count-snack">0</span>
-                    </div>
+                    <div class="category-bar category-snack" id="bar-snack" style="width: 0%"><span id="count-snack">0</span></div>
                 </div>
                 <div class="category-item">
                     <div class="category-label">Drink</div>
-                    <div class="category-bar category-drink" id="bar-drink" style="width: 0%">
-                        <span id="count-drink">0</span>
-                    </div>
+                    <div class="category-bar category-drink" id="bar-drink" style="width: 0%"><span id="count-drink">0</span></div>
                 </div>
             </div>
         </div>
 
-        <!-- Live Feed -->
         <div class="feed">
-            <div class="feed-title">
-                <span class="live-indicator"></span>
-                Live Donation Feed
-            </div>
+            <div class="feed-title"><span class="live-indicator"></span>Live Donation Feed</div>
             <div id="donation-list" class="donation-list">
-                <div class="loading">
-                    <div class="spinner"></div>
-                    Loading donations...
-                </div>
+                <div class="loading"><div class="spinner"></div>Loading donations...</div>
             </div>
         </div>
     </div>
 
     <script>
         const API_BASE = 'http://localhost:5000';
-        
+
         function formatTime(isoString) {
             const date = new Date(isoString);
-            return date.toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
+            return date.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
         }
 
         function updateStats(stats) {
             document.getElementById('total-items').textContent = stats.total_items || 0;
             document.getElementById('total-weight').textContent = stats.total_weight_lbs || 0;
             document.getElementById('unique-donors').textContent = stats.unique_donors || 0;
-
             const categories = stats.by_category || {};
             const total = stats.total_items || 1;
-
             ['fruit', 'snack', 'drink'].forEach(cat => {
                 const count = categories[cat] || 0;
                 const percent = (count / total) * 100;
@@ -453,18 +193,11 @@
 
         function renderDonations(donations) {
             const container = document.getElementById('donation-list');
-            
-            if (donations.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">📦</div>
-                        <div>No donations yet. Waiting for first item...</div>
-                    </div>
-                `;
+            if (!donations.length) {
+                container.innerHTML = `<div class="empty-state"><div class="empty-icon">📦</div><div>No donations yet. Waiting for first item...</div></div>`;
                 return;
             }
-
-            container.innerHTML = donations.reverse().map(d => `
+            container.innerHTML = donations.slice().reverse().map(d => `
                 <div class="donation-card">
                     <div class="donation-header">
                         <div class="donation-id">Donation #${d.id}</div>
@@ -472,60 +205,76 @@
                     </div>
                     <div class="donation-item">${d.item_name || 'Unknown Item'}</div>
                     <div class="donation-details">
-                        <div class="detail-item">
-                            <div class="detail-label">Category</div>
-                            <div class="detail-value">
-                                <span class="badge badge-${d.category}">${d.category}</span>
-                            </div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Weight</div>
-                            <div class="detail-value">${d.estimated_weight_lbs || '?'} lbs</div>
-                        </div>
-                        <div class="detail-item">
-                            <div class="detail-label">Expiry</div>
-                            <div class="detail-value">${d.estimated_expiry || 'N/A'}</div>
-                        </div>
+                        <div><div class="detail-label">Category</div><div class="detail-value"><span class="badge badge-${d.category}">${d.category}</span></div></div>
+                        <div><div class="detail-label">Weight</div><div class="detail-value">${d.estimated_weight_lbs ?? '?'} lbs</div></div>
+                        <div><div class="detail-label">Expiry</div><div class="detail-value">${d.estimated_expiry || 'N/A'}</div></div>
                     </div>
                 </div>
             `).join('');
         }
 
-        async function fetchData() {
-            try {
-                const [statsRes, donationsRes] = await Promise.all([
-                    fetch(`${API_BASE}/stats`),
-                    fetch(`${API_BASE}/donations`)
-                ]);
+        function renderPipelineStage(state) {
+            const status = document.getElementById('pipeline-status');
+            const body = document.getElementById('stage-body');
+            status.textContent = state.status_text || 'Pipeline status unavailable';
 
-                if (!statsRes.ok || !donationsRes.ok) {
-                    throw new Error('API not responding');
-                }
+            if (state.mode === 'streaming' || state.mode === 'processing') {
+                body.innerHTML = `
+                    <img class="camera-view" src="${API_BASE}/pipeline/frame?ts=${Date.now()}" alt="Live camera feed" />
+                    <div class="camera-overlay">${state.mode === 'processing' ? 'Processing snapshot...' : 'Camera live'}</div>
+                `;
+                return;
+            }
 
-                const stats = await statsRes.json();
-                const donations = await donationsRes.json();
-
-                updateStats(stats);
-                renderDonations(donations);
-            } catch (error) {
-                console.error('Failed to fetch data:', error);
-                document.getElementById('donation-list').innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-icon">⚠️</div>
-                        <div>Unable to connect to API</div>
-                        <div style="font-size: 0.875rem; margin-top: 0.5rem;">
-                            Make sure the API is running: <code>python api.py</code>
+            if (state.mode === 'classified' && state.last_result) {
+                const r = state.last_result;
+                body.innerHTML = `
+                    <div class="claude-result">
+                        <div class="claude-badge">Claude Classification Complete</div>
+                        <div class="result-grid">
+                            <div class="result-cell"><div class="result-label">Item</div><div class="result-value">${r.item_name || 'Unknown'}</div></div>
+                            <div class="result-cell"><div class="result-label">Category</div><div class="result-value">${r.category || 'Unknown'}</div></div>
+                            <div class="result-cell"><div class="result-label">Estimated Weight</div><div class="result-value">${r.estimated_weight_lbs ?? '?'} lbs</div></div>
+                            <div class="result-cell"><div class="result-label">Estimated Expiry</div><div class="result-value">${r.estimated_expiry || 'N/A'}</div></div>
+                            <div class="result-cell"><div class="result-label">Donation ID</div><div class="result-value">#${r.donation_id ?? '?'}</div></div>
+                            <div class="result-cell"><div class="result-label">Pipeline State</div><div class="result-value">${state.status_text || 'Completed'}</div></div>
                         </div>
                     </div>
                 `;
+                return;
+            }
+
+            body.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📷</div>
+                    <div>Start <code>python test_pipeline.py</code> to begin live camera stream.</div>
+                </div>
+            `;
+        }
+
+        async function fetchData() {
+            try {
+                const [statsRes, donationsRes, pipelineRes] = await Promise.all([
+                    fetch(`${API_BASE}/stats`),
+                    fetch(`${API_BASE}/donations`),
+                    fetch(`${API_BASE}/pipeline/state`)
+                ]);
+                if (!statsRes.ok || !donationsRes.ok || !pipelineRes.ok) throw new Error('API not responding');
+                const stats = await statsRes.json();
+                const donations = await donationsRes.json();
+                const pipeline = await pipelineRes.json();
+                updateStats(stats);
+                renderDonations(donations);
+                renderPipelineStage(pipeline);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('stage-body').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div>Unable to connect to API</div></div>`;
+                document.getElementById('donation-list').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div>Unable to connect to API</div></div>`;
             }
         }
 
-        // Initial load
         fetchData();
-
-        // Auto-refresh every 2 seconds
-        setInterval(fetchData, 2000);
+        setInterval(fetchData, 400);
     </script>
 </body>
 </html>
