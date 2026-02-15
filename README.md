@@ -1,6 +1,6 @@
 # Project Lend
 
-Autonomous food bank for TreeHacks 2026. xArm 1S sorts donated food, Claude agents coordinate donors + shelters.
+Autonomous food bank built at TreeHacks 2026! xArm 1S sorts donated food, Claude agents coordinate with donors + shelters.
 
 ## Hardware
 
